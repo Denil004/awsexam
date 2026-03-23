@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Details</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; }
+        h1 { border-bottom: 2px solid #ccc; padding-bottom: 10px; }
+        .detail-row { margin-bottom: 15px; border-bottom: 1px solid #eee; padding-bottom: 15px; }
+        .detail-label { font-weight: bold; color: #555; display: block; margin-bottom: 5px; }
+        .detail-value { font-size: 16px; }
+        .actions { margin-top: 20px; }
+        .btn { display: inline-block; padding: 10px 15px; background: #007bff; color: white; text-decoration: none; border-radius: 4px; margin-right: 10px; }
+        .btn:hover { background: #0056b3; }
+        .btn-gray { background: #6c757d; }
+        .btn-gray:hover { background: #5a6268; }
+    </style>
+</head>
+<body>
+    <h1>Student Details</h1>
+    
+    <div class="detail-row">
+        <span class="detail-label">Name</span>
+        <span class="detail-value">{{ student.first_name }} {{ student.last_name }}</span>
+    </div>
+    
+    <div class="detail-row">
+        <span class="detail-label">Email</span>
+        <span class="detail-value">{{ student.email }}</span>
+    </div>
+    
+    <div class="detail-row">
+        <span class="detail-label">Grade</span>
+        <span class="detail-value">{{ student.grade|default:"Not Assigned" }}</span>
+    </div>
+    
+    <div class="detail-row">
+        <span class="detail-label">Enrollment Date</span>
+        <span class="detail-value">{{ student.enrollment_date }}</span>
+    </div>
+    
+    <div class="actions">
+        <a href="{% url 'student_list' %}" class="btn btn-gray">Back to List</a>
+        <a href="{% url 'student_edit' student.pk %}" class="btn">Edit Student</a>
+    </div>
+</body>
+</html>

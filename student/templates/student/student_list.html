@@ -27,6 +27,7 @@
                 <th>Email</th>
                 <th>Grade</th>
                 <th>Enrollment Date</th>
+                <th>Actions</th>
             </tr>
         </thead>
         <tbody>
@@ -37,10 +38,15 @@
                 <td>{{ student.email }}</td>
                 <td>{{ student.grade }}</td>
                 <td>{{ student.enrollment_date }}</td>
+                <td>
+                    <a href="{% url 'student_detail' student.pk %}" style="margin-right: 5px;">View</a>
+                    <a href="{% url 'student_edit' student.pk %}" style="margin-right: 5px;">Edit</a>
+                    <a href="{% url 'student_delete' student.pk %}" style="color: red;">Delete</a>
+                </td>
             </tr>
             {% empty %}
             <tr>
-                <td colspan="5" class="empty">No students found.</td>
+                <td colspan="6" class="empty">No students found.</td>
             </tr>
             {% endfor %}
         </tbody>

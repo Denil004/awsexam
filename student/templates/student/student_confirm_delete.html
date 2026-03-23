@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Delete Student</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; }
+        h1 { border-bottom: 2px solid #ccc; padding-bottom: 10px; color: #dc3545; }
+        p { margin-bottom: 20px; font-size: 16px; }
+        button { padding: 10px 15px; background: #dc3545; color: white; border: none; cursor: pointer; border-radius: 4px; }
+        button:hover { background: #c82333; }
+        .cancel { text-decoration: none; padding: 10px 15px; background: #6c757d; color: white; border-radius: 4px; margin-right: 10px; }
+    </style>
+</head>
+<body>
+    <h1>Delete Student</h1>
+    
+    <p>Are you sure you want to delete the student <strong>"{{ student.first_name }} {{ student.last_name }}"</strong>? This action cannot be undone.</p>
+    
+    <form method="post">
+        {% csrf_token %}
+        <a href="{% url 'student_list' %}" class="cancel">Cancel</a>
+        <button type="submit">Yes, Delete</button>
+    </form>
+</body>
+</html>
