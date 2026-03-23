@@ -9,12 +9,10 @@ sudo apt update -y
 echo "Installing Python 3, venv, pip, Git, Nginx, and system dependencies..."
 sudo apt install python3 python3-venv python3-pip python3-dev pkg-config default-libmysqlclient-dev git nginx -y
 
-echo "Creating application directory..."
-mkdir -p /home/ubuntu/app
-# Note: If you cloned the repository via Git, you can copy its contents here or run from the pulled directory.
+APP_DIR="/home/ubuntu/awsexam"
 
 echo "Setting up Python virtual environment..."
-cd /home/ubuntu/app
+cd $APP_DIR
 python3 -m venv venv
 source venv/bin/activate
 
@@ -33,8 +31,8 @@ After=network.target
 [Service]
 User=ubuntu
 Group=www-data
-WorkingDirectory=/home/ubuntu/app
-ExecStart=/home/ubuntu/app/venv/bin/gunicorn --access-logfile - --workers 3 --bind unix:/home/ubuntu/app/app.sock core.wsgi:application
+WorkingDirectory=/home/ubuntu/awsexam
+ExecStart=/home/ubuntu/awsexam/venv/bin/gunicorn --access-logfile - --workers 3 --bind unix:/home/ubuntu/awsexam/app.sock core.wsgi:application
 
 [Install]
 WantedBy=multi-user.target
@@ -48,12 +46,12 @@ server {
 
     location = /favicon.ico { access_log off; log_not_found off; }
     location /static/ {
-        root /home/ubuntu/app;
+        root /home/ubuntu/awsexam;
     }
 
     location / {
         include proxy_params;
-        proxy_pass http://unix:/home/ubuntu/app/app.sock;
+        proxy_pass http://unix:/home/ubuntu/awsexam/app.sock;
     }
 }
 EOF'
@@ -70,10 +68,10 @@ sudo systemctl restart nginx
 sudo systemctl enable nginx
 
 echo -e "\n--- DEPLOYMENT SUCCESSFUL ---"
-echo "Make sure to create your .env file with your RDS details in /home/ubuntu/app/.env"
+echo "Make sure to create your .env file with your RDS details in /home/ubuntu/awsexam/.env"
 echo "Once created, restart gunicorn with: sudo systemctl restart gunicorn"
 echo "To create your database tables run:"
-echo "cd /home/ubuntu/app"
+echo "cd /home/ubuntu/awsexam"
 echo "source venv/bin/activate"
 echo "python manage.py migrate"
 echo -e "\nNote: Ensure the EC2 security group allows traffic on port 80 (HTTP) from your IP, and the RDS security group allows port 3306 originating from this EC2 instance."

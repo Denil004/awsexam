@@ -38,9 +38,9 @@ chmod +x deploy.sh
 ```
 
 ### 4. Configure Environment
-1. Enter the application directory (the script installs it in `/home/ubuntu/app`): 
+1. Enter the application directory (the script installs it in `/home/ubuntu/awsexam`): 
 ```bash
-cd /home/ubuntu/app
+cd /home/ubuntu/awsexam
 ```
 2. Copy `.env.example` to `.env`: `cp .env.example .env`
 3. Edit `.env` with your actual RDS credentials: `nano .env`
