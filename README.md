@@ -1,13 +1,14 @@
-# Small App for Ubuntu EC2 with RDS database
+# Django App for Ubuntu EC2 with Nginx & RDS
 
-This is a minimum viable Flask application to verify connectivity between an AWS EC2 instance running Ubuntu (`ubuntu` user) and an AWS RDS MySQL database.
+This is a minimum viable **Django** backend configured with **Gunicorn** and **Nginx** to connect to an AWS RDS MySQL database asynchronously. 
 
-## Included Files
+## Included Tech Stack
 
-- `app.py`: Simple Flask API with an endpoint to test RDS connection.
-- `.env.example`: Configuration variables needed for the connection.
-- `requirements.txt`: Python package requirements.
-- `deploy.sh`: Shell script to clone and set up the Python environment on your Ubuntu EC2 instance.
+- **Django**: The core web framework backend. 
+- **PyMySQL**: Used to connect Django securely to MySQL (RDS configuration built-in).
+- **Gunicorn**: The robust application server handling requests over a UNIX socket.
+- **Nginx**: Serving as a reverse proxy forwarding requests to Gunicorn.
+- **deploy.sh**: Script to set up all dependencies, systemd services, and Nginx configurations automatically securely without needing manual file manipulation.
 
 ## Deployment Instructions
 
@@ -19,7 +20,7 @@ This is a minimum viable Flask application to verify connectivity between an AWS
 ### 2. Launch EC2 Instance
 1. Launch an **Ubuntu** EC2 instance.
 2. Ensure you have internet access (e.g., public IP or NAT gateway).
-3. Update the EC2 Security Group to allow inbound HTTP/TCP traffic on port `8000` (so you can view the response).
+3. Update the EC2 Security Group to allow inbound HTTP/TCP traffic on port `80` (so Nginx can reach the public internet).
 
 ### 3. Deploy App
 Connect via SSH:
@@ -32,19 +33,33 @@ git clone https://github.com/albertcyriac04-lgtm/awsexam.git
 cd awsexam
 chmod +x deploy.sh
 
-# Move files to application folder or run setup in the local directory
+# Run the deployment script to setup Nginx and Gunicorn daemon
 ./deploy.sh
 ```
 
 ### 4. Configure Environment
-1. Enter the application directory where the script deployed it. If using the script defaults: `cd /home/ubuntu/app`
+1. Enter the application directory (the script installs it in `/home/ubuntu/app`): 
+```bash
+cd /home/ubuntu/app
+```
 2. Copy `.env.example` to `.env`: `cp .env.example .env`
 3. Edit `.env` with your actual RDS credentials: `nano .env`
+4. Important: Set `DJANGO_SECRET_KEY` and `DEBUG=False` for production in your `.env`.
 
-### 5. Run the Server
-While the virtual environment is open, run:
+### 5. Finalize the Setup
+Once the environment variables are active, restart your gunicorn service to register the new database settings and apply initial database migrations:
 ```bash
+# Restart the Gunicorn service
+sudo systemctl restart gunicorn
+
+# Activate virtual environment
 source venv/bin/activate
-python app.py
+
+# Apply migrations
+python manage.py makemigrations student
+python manage.py migrate
+
+# Create a superuser to access the admin panel
+python manage.py createsuperuser
 ```
-Visit `http://<ec2-public-ip>:8000/test-db` to verify the connection.
+Visit `http://<ec2-public-ip>/api/students/` to interact with the Student REST API, or navigate to `/admin/` to use the Django admin panel.
