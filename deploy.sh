@@ -1,77 +1,99 @@
 #!/bin/bash
+set -e
 
-# Deployment script for Ubuntu on AWS EC2
-# Django + Nginx + Gunicorn
+echo "======================================================"
+echo "  AWS EC2 + RDS Complete Django Deployment Script   "
+echo "======================================================"
 
-echo "Updating system packages..."
+# Dynamically pick up the current directory of the cloned repo
+APP_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+echo "Setting up application at: $APP_DIR"
+
+if [ ! -f "$APP_DIR/.env" ]; then
+    echo "--------------------------------------------------------"
+    echo "⚠️  WARNING: .env file not found!"
+    echo "Creating it from .env.example..."
+    cp "$APP_DIR/.env.example" "$APP_DIR/.env"
+    echo "--------------------------------------------------------"
+    echo "ACTION REQUIRED: Please inject your RDS credentials before deploying!"
+    echo "1. Edit the file by running: nano $APP_DIR/.env"
+    echo "2. Once saved, re-run this script: ./deploy.sh"
+    exit 1
+fi
+
+echo ">> Installing necessary system packages (Python, Nginx, MySQL libs)..."
 sudo apt update -y
+sudo apt install python3 python3-venv python3-pip python3-dev pkg-config default-libmysqlclient-dev git nginx curl -y
 
-echo "Installing Python 3, venv, pip, Git, Nginx, and system dependencies..."
-sudo apt install python3 python3-venv python3-pip python3-dev pkg-config default-libmysqlclient-dev git nginx -y
+echo ">> Securing $USER directory permissions for Nginx access..."
+sudo chmod 755 $HOME
+sudo chmod 755 $APP_DIR
 
-APP_DIR="/home/ubuntu/awsexam"
-
-echo "Setting up Python virtual environment..."
-cd $APP_DIR
+echo ">> Setting up Python Virtual Environment..."
+cd "$APP_DIR"
 python3 -m venv venv
 source venv/bin/activate
 
-echo "Installing requirements..."
+echo ">> Installing Python dependencies..."
+pip install --upgrade pip
 pip install -r requirements.txt
 
-echo "Collecting static files (make sure your .env has DB details soon)..."
-python manage.py collectstatic --noinput || true
+echo ">> Synchronizing Database (Makemigrations & Migrate)..."
+python manage.py makemigrations
+python manage.py migrate
 
-echo "Setting up Gunicorn systemd service..."
-sudo bash -c 'cat > /etc/systemd/system/gunicorn.service <<EOF
+echo ">> Collecting Static Files for Nginx..."
+python manage.py collectstatic --noinput
+
+echo ">> Configuring Gunicorn Systemd daemon..."
+sudo bash -c "cat > /etc/systemd/system/gunicorn.service <<EOF
 [Unit]
-Description=gunicorn daemon
+Description=Gunicorn daemon for AWS Django App
 After=network.target
 
 [Service]
-User=ubuntu
+User=$USER
 Group=www-data
-WorkingDirectory=/home/ubuntu/awsexam
-ExecStart=/home/ubuntu/awsexam/venv/bin/gunicorn --access-logfile - --workers 3 --bind unix:/home/ubuntu/awsexam/app.sock core.wsgi:application
+WorkingDirectory=$APP_DIR
+ExecStart=$APP_DIR/venv/bin/gunicorn --access-logfile - --workers 3 --bind unix:$APP_DIR/app.sock core.wsgi:application
 
 [Install]
 WantedBy=multi-user.target
-EOF'
+EOF"
 
-echo "Setting up Nginx configuration..."
-sudo bash -c 'cat > /etc/nginx/sites-available/django_app <<EOF
+echo ">> Configuring Nginx Proxy..."
+sudo bash -c "cat > /etc/nginx/sites-available/django_app <<EOF
 server {
     listen 80;
     server_name _;
 
     location = /favicon.ico { access_log off; log_not_found off; }
+    
     location /static/ {
-        root /home/ubuntu/awsexam;
+        alias $APP_DIR/static/;
     }
 
     location / {
         include proxy_params;
-        proxy_pass http://unix:/home/ubuntu/awsexam/app.sock;
+        proxy_pass http://unix:$APP_DIR/app.sock;
     }
 }
-EOF'
+EOF"
 
-echo "Enabling Nginx site..."
+echo ">> Activating Nginx Site..."
 sudo ln -sf /etc/nginx/sites-available/django_app /etc/nginx/sites-enabled/
 sudo rm -f /etc/nginx/sites-enabled/default
 
-echo "Restarting services..."
+echo ">> Booting Web Servers..."
 sudo systemctl daemon-reload
 sudo systemctl start gunicorn
 sudo systemctl enable gunicorn
 sudo systemctl restart nginx
 sudo systemctl enable nginx
 
-echo -e "\n--- DEPLOYMENT SUCCESSFUL ---"
-echo "Make sure to create your .env file with your RDS details in /home/ubuntu/awsexam/.env"
-echo "Once created, restart gunicorn with: sudo systemctl restart gunicorn"
-echo "To create your database tables run:"
-echo "cd /home/ubuntu/awsexam"
-echo "source venv/bin/activate"
-echo "python manage.py migrate"
-echo -e "\nNote: Ensure the EC2 security group allows traffic on port 80 (HTTP) from your IP, and the RDS security group allows port 3306 originating from this EC2 instance."
+echo "======================================================"
+echo " ✅ DEPLOYMENT 100% COMPLETE & LIVE!"
+echo "======================================================"
+echo "Your app is now running globally via Nginx on Port 80."
+echo "If you need an admin account to login, run:"
+echo "source venv/bin/activate && python manage.py createsuperuser"

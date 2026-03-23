@@ -1,68 +1,39 @@
-# Django App for Ubuntu EC2 with Nginx & RDS
+# Zero-Touch AWS EC2 + RDS Deployment 🚀
 
-This is a minimum viable **Django** backend configured with **Gunicorn** and **Nginx** to connect to an AWS RDS MySQL database asynchronously. 
+This repository is designed to be cloned onto **ANY fresh Ubuntu EC2 instance** and deployed against **ANY standard AWS RDS MySQL database** entirely automatically! It configures a complete resilient backend using Django, Gunicorn, Nginx, and PyMySQL out of the box.
 
-## Included Tech Stack
+## Instructions for ANY Server
 
-- **Django**: The core web framework backend. 
-- **PyMySQL**: Used to connect Django securely to MySQL (RDS configuration built-in).
-- **Gunicorn**: The robust application server handling requests over a UNIX socket.
-- **Nginx**: Serving as a reverse proxy forwarding requests to Gunicorn.
-- **deploy.sh**: Script to set up all dependencies, systemd services, and Nginx configurations automatically securely without needing manual file manipulation.
+### 1. Ready your AWS RDS Database
+Ensure your RDS engine is running and you have created an initial, blank database (e.g., `CREATE DATABASE awsexam;`) securely via an admin connection.
 
-## Deployment Instructions
-
-### 1. Launch RDS Instance
-1. Launch an RDS MySQL Database.
-2. Note your Endpoint name, Database Name, Username, and Password.
-3. Make sure the RDS Security Group allows inbound MySQL traffic (`port 3306`) from the Security Group attached to your EC2 instance.
-
-### 2. Launch EC2 Instance
-1. Launch an **Ubuntu** EC2 instance.
-2. Ensure you have internet access (e.g., public IP or NAT gateway).
-3. Update the EC2 Security Group to allow inbound HTTP/TCP traffic on port `80` (so Nginx can reach the public internet).
-
-### 3. Deploy App
-Connect via SSH:
-```bash
-ssh -i "your-key.pem" ubuntu@<your-ec2-ip-address>
-```
-Clone this repository to the Ubuntu instance:
+### 2. Download code on your EC2 box
 ```bash
 git clone https://github.com/albertcyriac04-lgtm/awsexam.git
 cd awsexam
 chmod +x deploy.sh
+```
 
-# Run the deployment script to setup Nginx and Gunicorn daemon
+### 3. Deploy
+Execute the completely automated deployment script:
+```bash
 ./deploy.sh
 ```
 
-### 4. Configure Environment
-1. Enter the application directory (the script installs it in `/home/ubuntu/awsexam`): 
-```bash
-cd /home/ubuntu/awsexam
-```
-2. Copy `.env.example` to `.env`: `cp .env.example .env`
-3. Edit `.env` with your actual RDS credentials: `nano .env`
-4. Important: Set `DJANGO_SECRET_KEY` and `DEBUG=False` for production in your `.env`.
+**What the script automatically does:**
+1. Dynamically detects your folder structure.
+2. If this is your first time, it will pause, generate a `.env` template, and ask you to update your RDS credentials! (Update using `nano .env`)
+3. Patches the strict security permissions blocking Nginx.
+4. Generates an isolated Python Virtual Environment and automatically installs all dependencies (including `cryptography` for MySQL 8 Authentication bypasses!).
+5. Generates the Python blueprint configurations via `makemigrations`.
+6. Instantiates the tables into your AWS RDS database securely via `migrate`.
+7. Hard-codes Nginx and Gunicorn configuration files tailored to your specific system environments.
+8. Registers your web servers as background Linux systemd services and exposes Port 80.
 
-### 5. Finalize the Setup
-Once the environment variables are active, restart your gunicorn service to register the new database settings and apply initial database migrations:
+### 4. Need an Admin Portal?
+Once deployed successfully, manually launch the virtual environment and create an administrative user:
 ```bash
-# Restart the Gunicorn service
-sudo systemctl restart gunicorn
-
-# Activate virtual environment
 source venv/bin/activate
-
-# Apply migrations
-python manage.py makemigrations student
-python manage.py migrate
-
-# Create a superuser to access the admin panel
 python manage.py createsuperuser
 ```
-Visit `http://<ec2-public-ip>/api/students/` to interact with the Student REST API, or navigate to `/admin/` to use the Django admin panel.
-
-6. setup mysql
-#sudo apt install mysql-client 
+You can access your database management panel at `http://<your-ec2-ip>/admin/`.
