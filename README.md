@@ -63,3 +63,6 @@ python manage.py migrate
 python manage.py createsuperuser
 ```
 Visit `http://<ec2-public-ip>/api/students/` to interact with the Student REST API, or navigate to `/admin/` to use the Django admin panel.
+
+6. setup mysql
+#sudo apt install mysql-client 
