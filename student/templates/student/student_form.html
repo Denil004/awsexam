@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add Student</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
+        body {
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            color: #f1f5f9;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+        }
+        .container {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 24px;
+            padding: 3rem;
+            width: 100%;
+            max-width: 500px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .header {
+            margin-bottom: 2.5rem;
+            text-align: center;
+        }
+        h1 {
+            font-weight: 600;
+            font-size: 2.25rem;
+            letter-spacing: -0.025em;
+            background: linear-gradient(to right, #60a5fa, #a78bfa);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 0.5rem;
+        }
+        p.subtitle { color: #94a3b8; font-size: 0.95rem; }
+        
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            font-size: 0.875rem;
+            color: #cbd5e1;
+            letter-spacing: 0.025em;
+        }
+        input {
+            width: 100%;
+            padding: 1rem 1.25rem;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            color: #f8fafc;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            outline: none;
+        }
+        input:focus {
+            background: rgba(255, 255, 255, 0.06);
+            border-color: #8b5cf6;
+            box-shadow: 0 0 0 4px rgba(139, 92, 246, 0.1);
+        }
+        
+        .actions {
+            display: flex;
+            gap: 1rem;
+            margin-top: 2.5rem;
+        }
+        button {
+            flex: 1;
+            background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+            color: white;
+            padding: 1rem;
+            border: none;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 14px 0 rgba(139, 92, 246, 0.39);
+        }
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(139, 92, 246, 0.5);
+        }
+        .btn-cancel {
+            flex: 1;
+            background: transparent;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #cbd5e1;
+            padding: 1rem;
+            border-radius: 12px;
+            font-weight: 600;
+            text-align: center;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            box-shadow: none;
+        }
+        .btn-cancel:hover {
+            background: rgba(255, 255, 255, 0.05);
+            color: #f8fafc;
+            transform: translateY(-2px);
+        }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Error styling */
+        .errorlist {
+            color: #f87171;
+            list-style: none;
+            font-size: 0.85rem;
+            margin-top: 0.5rem;
+            padding-left: 0.5rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Enroll Student</h1>
+            <p class="subtitle">Enter the student's information into the database.</p>
+        </div>
+        
+        <form method="post">
+            {% csrf_token %}
+            {% for field in form %}
+                <div class="form-group">
+                    <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                    {{ field }}
+                    {% if field.errors %}
+                        <ul class="errorlist">
+                        {% for error in field.errors %}
+                            <li>{{ error }}</li>
+                        {% endfor %}
+                        </ul>
+                    {% endif %}
+                </div>
+            {% endfor %}
+            <div class="actions">
+                <a href="{% url 'student_list' %}" class="btn-cancel">Cancel</a>
+                <button type="submit">Save Record</button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Script to dynamically add placeholder attributes matching labels -->
+    <script>
+        document.querySelectorAll('input').forEach(input => {
+            const label = document.querySelector(`label[for="${input.id}"]`);
+            if(label) { input.placeholder = `Enter ${label.innerText.toLowerCase()}...`; }
+            if(input.type === 'email') { input.placeholder = 'student@example.com'; }
+        });
+    </script>
+</body>
+</html>
